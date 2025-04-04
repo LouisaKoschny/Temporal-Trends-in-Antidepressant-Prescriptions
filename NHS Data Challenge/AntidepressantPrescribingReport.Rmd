@@ -1,0 +1,340 @@
+---
+title: 'Longitudinal Analysis of Antidepressant Prescribing'
+author: "Louisa Koschny"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    theme:
+      bg: "white"
+      fg: "#22223b"
+      primary: "#598392"
+      secondary: "#aec3b0"
+      success: "#124559"
+      base_font:
+        google: "Quattrocento"
+      heading_font:
+        google: "JetBrains Mono"
+      code_font:
+        google: "JetBrains Mono"
+    toc: true 
+    toc_float: true
+    toc_depth: 3  
+    number_sections: true 
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE, eval=TRUE}
+if (!requireNamespace("knitr", quietly = TRUE)) {install.packages("knitr")}
+knitr::opts_knit$set(root.dir = rprojroot::find_root(criterion = rprojroot::is_rstudio_project))
+```
+
+```{r, include=FALSE}
+library(dplyr)
+library(highcharter)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+library(foreign)
+library(ggplot2)
+
+antidep <-  readRDS("data/STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds")
+antidep
+```
+
+# Report Outline
+
+This report seeks to identify trends in antidepressant prescribing within the NHS England from January 2021 to December 2024 using a longitudinal data analysis. This will be split into two parts: the first part will focus on national and regional figures, while the second part will delve into more exploratory analysis of antidepressant prescribing cost trends. This will be followed by a discussion of prescription cost trends for Sertraline, specifically.  I will conclude with a summary of the findings and potential implications for future research and policy.
+
+# Part I. 
+  
+Firstly, I will provide some data, from both a national and regional level to help contextualises my further analysis in the second part of this report. 
+    
+I will use a bar chart to visualise NHS England's total annual antidepressant prescribing from January 2021 to December 2024, which will allow me to identify possible trends in prescriptions.  
+**Figure 1**: Total number of antidepressant items prescribed in the NHS England from January 2021 to December 2024  
+  
+```{r, echo=FALSE, message=FALSE}
+#create vertical bar chart showing total annual antidepressant prescribing (items), label the x-axis as 'Year-Month'
+antidep %>% 
+  group_by(YM) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  ungroup() %>% 
+  hchart("column", hcaes(YM, ITEMS)) %>% hc_xAxis(title = list(text = "Year-Month (YYYYMM)")) %>%  # Custom X-axis label
+  hc_yAxis(title = list(text = "Number of Items"))  # Custom Y-axis label
+```
+  
+**Interpretation:** In this graph we can identify that from January 2021 to December 2024, the number of antidepressant items prescribed through the NHS England has steadily increased. The highest number of antidepressants prescribed was in October 2024, with 7,980,486 items prescribed and the lowest level of prescriptions was in February 2021 at 6,314,901 items. The trend is generally increasing over time, with some fluctuations in the number of items prescribed each month.
+
+Second, create a bar chart that shows the total antidepressant prescribing cost.
+Describe the trend of each chart and compare the charts against each other.  
+Furthermore, a visualisation of the total cost of antidepressant prescribing in the NHS England from January 2021 to December 2024 will be provided to help identify corresponding trends in costs. 
+  
+**Figure 2**: Total cost of antidepressant prescribing in the NHS England from January 2021 to December 2024
+```{r, echo=FALSE, message=FALSE}
+#create vertical bar chart showing total annual antidepressant prescribing cost
+antidep %>% 
+  group_by(YM) %>% 
+  summarise(COST = sum(COST)) %>% 
+  ungroup() %>% 
+  hchart("column", hcaes(YM, COST)) %>% hc_xAxis(title = list(text = "Year-Month (YYYYMM)")) %>%  # Custom X-axis label
+  hc_yAxis(title = list(text = "Total Cost"))  # Custom Y-axis label
+```
+**Interpretation**: In this graph we can identify a steady downwards trend in the cost of antidepressant prescriptions faced by the NHS England. The highest cost of antidepressant prescriptions was incurred in March of 2021, at over 31.6 million GBP. The lowest total cost of antidepressant prescriptions was in February 2022 just above 15 million GBP, however there is a clear identifiable downwards trend in the cost of antidepressant observable throughout the period of January 2021 to December 2024. 
+  
+**Comparison of Fig.1 and Fig.2**:
+  
+We could identify a steady upwards trend in the total number of antidepressant items prescribed through the NHS England from January 2021 to December 2024. At the same time, the total cost of these antidepressants has steadily decreased throughout the same period of time. This could be due to a reduction in the price per unit of antidepressants, however, the exact cause of this trend would require further investigation.
+
+Through a region-specific analysis, I will now explore how these trends take shape on a regional level. I will provide two tables that show the total number of antidepressant items prescribed and the total cost of antidepressant prescribing by region.
+    
+**Table 1**: Total number of antidepressant items prescribed by the NHS England from January 2021 to December 2024, per region.  
+```{r, echo=FALSE, message=FALSE}
+#create table showing the total annual antidepressant prescribing per region
+antidep %>% 
+  group_by(YEAR, REGION) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  pivot_wider(names_from = REGION, values_from = ITEMS) %>% 
+  select(YEAR, `EAST OF ENGLAND`, `LONDON`, `MIDLANDS`, `NORTH EAST AND YORKSHIRE`, `NORTH WEST`, `SOUTH EAST`, `SOUTH WEST`) %>%   kable("html", caption = "Antidepressant Items by Region") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = TRUE
+                ) %>%
+  column_spec(1, bold = TRUE) %>%  # Make the Year column bold
+  row_spec(0, bold = TRUE, font_size = 14, color = "white", background = "#6b8ab2")
+
+```
+  
+**Table 2**: Total cost of antidepressant items prescribed by the NHS England from January 2021 to December 2024, per region.
+    
+```{r, echo=FALSE, message=FALSE}
+#create table showing the total annual cost of antidepressant prescribing per region
+antidep %>% 
+  group_by(YEAR, REGION) %>% 
+  summarise(COST = sum(COST)) %>% 
+  pivot_wider(names_from = REGION, values_from = COST) %>% 
+  select(YEAR, `EAST OF ENGLAND`, `LONDON`, `MIDLANDS`, `NORTH EAST AND YORKSHIRE`, `NORTH WEST`, `SOUTH EAST`, `SOUTH WEST`) %>%   kable("html", caption = "Cost of Antidepressants by Region") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = TRUE
+                ) %>%
+  column_spec(1, bold = TRUE) %>%  # Make the Year column bold
+  row_spec(0, bold = TRUE, font_size = 14, color = "white", background = "#6b8ab2")
+```
+
+**Comparisons**: The earlier identified downwards trend in cost of antidepressants and the upwards trend in number of prescriptions for antidepressants are consistent across all regions of England, which suggests that this is a broader pattern that is not limited to a specific regional context. The North East and Yorkshire region consistently has the highest number of antidepressant items prescribed and the highest cost of antidepressant prescriptions, while London has the lowest number of antidepressant items prescribed and the lowest cost of antidepressant prescriptions. This could be due to differences in population size, demographics, or healthcare infrastructure across regions.
+  
+  
+Next, I will investigate which antidepressant are most commonly prescribed, and which make up the biggest share of total antidepressant prescribing costs. I will use bar charts to visualise the data. 
+    
+**Figure 3**: Top 10 most prescribed antidepressants in the NHS England from January 2021 to December 2024.  
+```{r, echo=FALSE, message=FALSE}
+#create horizontal bar chart showing the 10 most prescribed antidepressants
+antidep %>% 
+  group_by(DRUG) %>% 
+  summarise(ITEMS = sum(ITEMS)) %>% 
+  arrange(desc(ITEMS)) %>% 
+  top_n(10) %>% 
+  hchart("bar", hcaes(DRUG, ITEMS)) %>% hc_yAxis(title = list(text = "Number of Items")) %>%  # Custom X-axis label
+  hc_xAxis(title = list(text = "Antidepressant Drug"))  # Custom Y-axis label
+```
+  
+**Figure 4**: Top 10 most costly antidepressants in the NHS England from January 2021 to December 2024.  
+```{r, echo=FALSE, message=FALSE}
+#create horizontal bar chart showing the 10 most expensive antidepressants
+antidep %>% 
+  group_by(DRUG) %>% 
+  summarise(COST = sum(COST)) %>% 
+  arrange(desc(COST)) %>% 
+  top_n(10) %>% 
+  hchart("bar", hcaes(DRUG, COST)) %>% hc_yAxis(title = list(text = "Cost of Items")) %>%  # Custom X-axis label
+  hc_xAxis(title = list(text = "Antidepressant Drug"))  # Custom Y-axis label
+```
+
+
+**Interpretation**: As recognisable in the two plots provided above, the list of the top 10 most prescribed antidepressants and the top 10 most costly antidepressants are not identical. While Sertraline  has is the highest ranked in both categories, there are some  discrepancies with other antidepressants, e.g., while Venlafaxine is only ranked 6th in number of prescriptions, it costs the NHS England the 2nd most out of all antidepressant drugs. Overall, some of the most prescribed antidepressants do not even feature at all amongst the most costly, and vice versa. This could be due to differences in the unit cost of each drug, the number of items prescribed, or a combination of both factors. This information could be useful for the NHS England to identify potential areas for cost savings or further investigation into the cost-effectiveness of different antidepressant drugs.
+
+# Part II. (Longitudinal Analysis)
+
+In an attempt to provide some further nuanced insights into the specific effect individual drugs have in bringing about the previously observed patterns, I will conduct a longitudinal data analysis of the top 10 most prescribed antidepressants in the NHS England from January 2021 to December 2024. I will create a stacked column chart to visualise the monthly trends of these antidepressants.
+  
+**Figure 5**: Trend of antidepressant items prescribed in the NHS England from January 2021 to December 2024.
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(highcharter)
+
+# Identify the top 10 most prescribed drugs overall
+top_10_drugs <- antidep %>%
+  group_by(DRUG) %>%
+  summarise(Total_Items = sum(ITEMS), .groups = "drop") %>%
+  arrange(desc(Total_Items)) %>%
+  slice_head(n = 10) %>%
+  pull(DRUG)  # Extract top 10 drug names
+
+# Filter dataset for only the top 10 drugs and sort within each year
+filtered_data <- antidep %>%
+  filter(DRUG %in% top_10_drugs) %>%
+  group_by(YM, DRUG) %>%
+  summarise(ITEMS = sum(ITEMS), .groups = "drop") %>%
+  arrange(YM, desc(ITEMS)) %>%  # Sort by Year, then by descending ITEMS
+  mutate(DRUG = factor(DRUG, levels = unique(DRUG)))  # Ensure stacking order
+
+# Create the sorted stacked column chart
+filtered_data %>%
+  hchart(
+    "column", 
+    hcaes(x = YM, y = ITEMS, group = DRUG)  # Group by DRUG for stacked colors
+  ) %>%
+  hc_plotOptions(column = list(stacking = "normal")) %>%  # Ensures stacking
+  hc_xAxis(title = list(text = "Year-Month (YYYYMM)")) %>%  
+  hc_yAxis(title = list(text = "Number of Items")) %>%  
+  hc_tooltip(shared = TRUE)%>%
+  hc_title(text = "NHS England's Top 10 Most-Prescribed Antidepressant Over Time",
+    style = list(
+      fontFamily = "JetBrains Mono",
+      fontSize = "18px",
+      fontWeight = "bold",
+      color = "#2c3e50"
+    )
+  ) %>%
+  hc_caption(text = "Source: NHS Open Data Portal")
+```
+  
+**Discussion**:  
+This graph shows the monthly trend of antidepressant prescriptions in the NHS England from January 2021 to December 2024. It is a stacked bar chart where each colour represents a different antidepressant drug.  
+Here are some key takeaways from the graph:  
+•   The total number of antidepressant items prescribed gradually rose over time.
+•   Sertraline is the most prescribed antidepressant •   it consistently has the largest portion of total prescriptions. 
+•   Amitriptyline, Citalopram, and Mirtazapine are also major contributors to the total number of antidepressant items prescribed.
+•   All other drugs included in the graph only make up a small portion of the total number of antidepressant items prescribed.
+•   The prescribing trends remain relatively stable over time, with only minor fluctuations in the number of items prescribed each month, despite the overall upward trend.  
+  
+**Figure 6**: Trend of antidepressant prescribing cost in the NHS England from 2021 to 2024.
+```{r echo=FALSE, message=FALSE}
+library(dplyr)
+library(highcharter)
+
+# Identify the top 10 most prescribed drugs overall
+top_10_drugs_cost <- antidep %>%
+  group_by(DRUG) %>%
+  summarise(Total_Cost = sum(COST), .groups = "drop") %>%
+  arrange(desc(Total_Cost)) %>%
+  slice_head(n = 10) %>%
+  pull(DRUG)  # Extract top 10 drug names
+
+# Filter dataset for only the top 10 drugs and sort within each year
+filtered_data2 <- antidep %>%
+  filter(DRUG %in% top_10_drugs_cost) %>%
+  group_by(YM, DRUG) %>%
+  summarise(COST = sum(COST), .groups = "drop") %>%
+  arrange(YM, desc(COST)) %>%  # Sort by Year, then by descending ITEMS
+  mutate(DRUG = factor(DRUG, levels = unique(DRUG)))  # Ensure stacking order
+
+# Create the sorted stacked column chart
+filtered_data2 %>%
+  hchart(
+    "column", 
+    hcaes(x = YM, y = COST, group = DRUG)  # Group by DRUG for stacked colors
+  ) %>%
+  hc_plotOptions(column = list(stacking = "normal")) %>%  # Ensures stacking
+  hc_xAxis(title = list(text = "Year-Month (YYYYMM)")) %>%  
+  hc_yAxis(title = list(text = "Cost of Items")) %>%  
+  hc_tooltip(shared = TRUE) %>%  # Tooltip to show breakdown per drug
+  hc_title(
+    text = "NHS England's Top 10 Most-Costly Antidepressants Over Time",
+    style = list(
+      fontFamily = "JetBrains Mono",
+      fontSize = "18px",
+      fontWeight = "bold",
+      color = "#2c3e50"
+    )
+  ) %>%
+  hc_caption(text = "Source: NHS Open Data Portal")
+```
+This stacked bar chart portrays the monthly cost of antidepressant prescriptions in the NHS England from January 2021 to December 2024, with each colour representing a different antidepressant drug.
+Here are some key insights:  
+•   The total cost of antidepressant prescriptions has decreased over time.  
+•   Sertraline is the most costly antidepressant, consistently accounting for the largest portion of total costs, however, as the total amount of Sertraline prescribed has increased, I conclude that there was likely a reduction in the unit price of Sertraline.  
+•   Venlafaxine, Amitriptyline, Mirtazapine, Citalopram and Duloxetine are also relatively big contributors to the total cost of antidepressant prescriptions.  
+•   All other medications listed in the graph above, only made up a small share of the overall cost of antidepressant prescriptions that the NHS England faced.   
+  
+## Sertraline In-Depth Analysis  
+  
+Figure 7: Monthly cost per Sertraline item prescribed in the NHS England from January 2021 to December 2024.  
+  
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.show='hold'}
+sertraline_data <- antidep %>% filter(DRUG == "Sertraline hydrochloride")
+
+
+# Calculate total cost and total items outside of the pipe
+total_cost <- sum(sertraline_data$COST, na.rm = TRUE)
+total_items <- sum(sertraline_data$ITEMS, na.rm = TRUE)
+cost_per_item <-  total_cost / total_items
+
+
+
+# Now, we can use the calculated values inside the pipe
+sertraline_monthly <- sertraline_data %>%
+  group_by(YM) %>%  # Group by the 'YM' column (year-month)
+
+  summarise(
+    total_cost = sum(COST, na.rm = TRUE),  # Calculate total cost for eSach month
+    total_items = sum(ITEMS, na.rm = TRUE),  # Calculate total items for each month
+    cost_per_item = total_cost / total_items  # Calculate cost per item for each month
+  )
+
+
+
+
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.show='hold'}
+sertraline_monthly %>%
+  hchart(
+    "line",  # Line chart type
+    hcaes(x = YM, y = cost_per_item)  # Plot cost_per_item against YM
+  ) %>%
+  hc_title(
+    text = "Monthly Cost per Sertraline Item Prescribed",
+    style = list(
+      fontFamily = "JetBrains Mono",
+      fontSize = "18px",
+      fontWeight = "bold",
+      color = "#2c3e50"
+    )
+  ) %>%
+  hc_xAxis(
+    title = list(text = "Month (YYYYMM)"),
+    labels = list(rotation = 90)  # Rotate x-axis labels to vertical
+  ) %>%
+  hc_yAxis(
+    title = list(text = "Cost per Item (£)")
+  ) %>%
+  hc_caption(
+    text = "Source: NHS Prescribing Data",
+    style = list(
+      fontFamily = "JetBrains Mono",
+      fontSize = "12px",
+      color = "#7f8c8d"
+    )
+  ) %>%
+  hc_plotOptions(
+    line = list(
+      lineWidth = 3,
+      color = "steelblue"
+    )
+  )
+```
+  
+**Discussion:**  
+This line chart shows the monthly cost per Sertraline item prescribed in the NHS England from January 2021 to December 2024. Here are some key takeaways:  
+•   The cost per Sertraline item has decreased over time, which is consistent with the overall trend of decreasing costs for antidepressant prescriptions.  
+•   The cost per item was highest in January 2021, at approximately £7.80, and has steadily decreased to around £2.00 by December 2024 with some minor fluctuations throughout.  
+•   The reduction in cost could reflect various factors such as price renegotiations, lower acquisition costs for the NHS, or a shift towards more cost-effective suppliers or alternatives. This aligns with efforts to optimize NHS spending while ensuring that patients still have access to essential medications.  
+
+
+# Summary
+  
+This report sought to identify trends in antidepressant prescribing in NHS England from January 2012 to December 2024. The analysis was split into two parts: the first part focused on national and regional figures, while the second part delved into more exploratory analysis of antidepressant prescribing cost trends. One of the significant findings was that the overall number of antidepressant prescriptions steadily increased over the observed time frame, while the total cost of these prescriptions steadily decreased. Notably, Sertraline was consistently the most prescribed and most costly antidepressant, although its cost per item declined over the period, contributing to the reduction in spend.  
+Interestingly, the most prescribed antidepressants were not always the most costly, highlighting an opportunity for the NHS to review and potentially renegotiate pricing for high-cost, high-volume drugs to maximise value.  
+This report also identified the decline of the cost in Sertraline as a key factor behind the overall reduction in prescription costs faced by the NHS England. The overall pattern suggests that, despite the rising number of prescriptions, cost-saving opportunities are emerging from falling unit prices of some key drugs.  
+This report can help lay the groundwork for understanding how and where the NHS may reduce costs in the future, allowing them to maximise the budget while still providing the best possible care to patients. Future research should explore the underlying causal mechanisms behind the cost reductions to better inform future budget decisions.  
+Furthermore, the upward trend in the number of antidepressant prescriptions warrants further investigation into the possible causes and how these can be addressed, not only to reduce prescription costs but, more importantly, to improve public health outcomes.  
+  
+
+
