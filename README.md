@@ -16,11 +16,3 @@ The **NHS Data Challenge** project is focused on analyzing antidepressant prescr
 The **`data/`** folder contains the following RDS files:
 - **`EEXTENSION_STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds`**
 - **`STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds`**
-
-  
-  You can install them with the following commands:
-  ```r
-  install.packages("tidyverse")
-  install.packages("highcharter")
-  install.packages("dplyr")
-  install.packages("ggplot2")
