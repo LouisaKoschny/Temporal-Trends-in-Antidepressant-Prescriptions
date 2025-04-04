@@ -14,5 +14,5 @@ The **NHS Data Challenge** project is focused on analyzing antidepressant prescr
 
 ### Data Folder:
 The **`data/`** folder contains the following RDS files:
-- **`EEXTENSION_STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds`**
+- **`EXTENSION_STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds`**
 - **`STEP_UP_REGIONAL_ANTIDEPRESSANTS.Rds`**
