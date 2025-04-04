@@ -1,2 +1,2 @@
 # Temporal-Trends-in-Antidepressant-Prescriptions
-Longitudinal exploration of antidepressant prescriptions and costs across NHS England regions (2021-2024)
+Longitudinal exploration of antidepressant prescriptions and costs across NHS England regions (2021-2024) as part of Dig Data's NHS Step Up Career Challenge.
